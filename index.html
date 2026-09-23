@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultra Weather Pro — Ultimate UI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-hover: rgba(255, 255, 255, 0.22);
+  --text-main: #ffffff;
+  --text-sub: rgba(255, 255, 255, 0.7);
+  --accent: #00e5ff;
+  --card-radius: 20px;
+}
+
+body.light {
+  --bg-gradient: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-hover: rgba(255, 255, 255, 0.65);
+  --text-main: #1e293b;
+  --text-sub: #475569;
+  --accent: #0284c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+body {
+  background: var(--bg-gradient);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  transition: background 0.5s ease, color 0.3s ease;
+}
+
+.app-wrapper {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 28px;
+  padding: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+/* Header */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.brand-title { font-size: 1.2rem; font-weight: 700; }
+.actions-group { display: flex; gap: 8px; }
+
+.btn-icon {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  transition: 0.2s;
+}
+.btn-icon:hover { background: var(--glass-hover); transform: translateY(-2px); }
+.btn-icon.listening { animation: pulse 1s infinite alternate; background: rgba(255, 0, 0, 0.4); }
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.15); }
+}
+
+/* Search Bar */
+.search-container {
+  display: flex;
+  gap: 10px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 6px 12px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+.search-container input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  width: 100%;
+  font-size: 0.95rem;
+}
+.search-container input::placeholder { color: var(--text-sub); }
+.search-btn {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Card Design */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--card-radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(12px);
+}
+
+/* Hero Weather Section */
+.hero-card { text-align: center; }
+.hero-city { font-size: 1.5rem; font-weight: 700; }
+.hero-temp { font-size: 3.5rem; font-weight: 800; margin: 10px 0; }
+.hero-condition { text-transform: capitalize; color: var(--text-sub); font-size: 1rem; }
+
+/* Grid Info */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 14px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.stat-icon { font-size: 1.5rem; }
+.stat-val { font-weight: 700; font-size: 1rem; }
+.stat-label { font-size: 0.75rem; color: var(--text-sub); }
+
+/* Horizontal Scroll */
+.scroll-x {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.scroll-x::-webkit-scrollbar { display: none; }
+
+.hour-item {
+  min-width: 70px;
+  padding: 12px 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  text-align: center;
+}
+
+/* Forecast List (5-Days) */
+.forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.forecast-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+/* AQI Pill Styles */
+.aqi-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.aqi-1 { background: rgba(76, 175, 80, 0.3); color: #81c784; }
+.aqi-2 { background: rgba(255, 235, 59, 0.3); color: #fff176; }
+.aqi-3 { background: rgba(255, 152, 0, 0.3); color: #ffb74d; }
+.aqi-4 { background: rgba(244, 67, 54, 0.3); color: #e57373; }
+.aqi-5 { background: rgba(156, 39, 176, 0.3); color: #ba68c8; }
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="brand-title">🌤 Ultra Weather</div>
+    <div class="actions-group">
+      <button class="btn-icon" onclick="getLocation()" title="Auto GPS">📍</button>
+      <button class="btn-icon" id="mic-btn" onclick="startVoice()" title="Voice Search">🎤</button>
+      <button class="btn-icon" id="unit-btn" onclick="toggleUnit()" title="Unit Switch">°C</button>
+      <button class="btn-icon" onclick="toggleMode()" title="Theme Toggle">🌗</button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-container">
+    <input id="city" type="text" placeholder="शहर का नाम लिखें...">
+    <button class="search-btn" onclick="handleSearch()">Search</button>
+  </div>
+
+  <!-- Hero Card -->
+  <div class="glass-card hero-card">
+    <div id="hero-city" class="hero-city">--</div>
+    <div id="hero-icon" style="font-size: 4rem; margin: 10px 0;">🌤</div>
+    <div id="hero-temp" class="hero-temp">--°</div>
+    <div id="hero-desc" class="hero-condition">मौसम लोड हो रहा है...</div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">💧</div>
+      <div>
+        <div class="stat-label">Humidity</div>
+        <div id="stat-humidity" class="stat-val">--%</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💨</div>
+      <div>
+        <div class="stat-label">Wind Speed</div>
+        <div id="stat-wind" class="stat-val">-- m/s</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🌅</div>
+      <div>
+        <div class="stat-label">Sunrise</div>
+        <div id="stat-sunrise" class="stat-val">--:--</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🌇</div>
+      <div>
+        <div class="stat-label">Sunset</div>
+        <div id="stat-sunset" class="stat-val">--:--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AQI Section -->
+  <div class="glass-card">
+    <div style="font-size: 0.9rem; color: var(--text-sub);">Air Quality Index (AQI)</div>
+    <div id="aqi-display">
+      <span class="aqi-pill aqi-1">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Hourly Forecast -->
+  <div class="glass-card">
+    <div style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 12px;">Hourly Forecast</div>
+    <div id="hourly-scroll" class="scroll-x"></div>
+  </div>
+
+  <!-- 5 Days Forecast -->
+  <div class="glass-card">
+    <div style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 12px;">📅 5-Day Forecast</div>
+    <div id="forecast-list" class="forecast-list"></div>
+  </div>
+
+  <!-- Temperature Graph -->
+  <div class="glass-card">
+    <div style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 12px;">Temperature Trend</div>
+    <canvas id="tempChart" height="150"></canvas>
+  </div>
+</div>
+
+<script>
+const key = "73e4135e8c6d9d61d0780e3979989f8b";
+let tempChart = null;
+let unit = "C";
+let currentCoords = null;
+
+window.onload = () => {
+  const lastCity = localStorage.getItem("lastCity");
+  if (lastCity) {
+    document.getElementById("city").value = lastCity;
+    searchCity(lastCity);
+  } else {
+    getLocation();
+  }
+};
+
+function toggleUnit() {
+  unit = unit === "C" ? "F" : "C";
+  document.getElementById("unit-btn").innerText = `°${unit}`;
+  if (currentCoords) fetchAll(currentCoords.lat, currentCoords.lon);
+}
+
+function toggleMode() {
+  document.body.classList.toggle("light");
+  if (tempChart) {
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-main');
+    tempChart.options.plugins.legend.labels.color = textColor;
+    tempChart.options.scales.x.ticks.color = textColor;
+    tempChart.options.scales.y.ticks.color = textColor;
+    tempChart.update();
+  }
+}
+
+// Fixed Auto Location Function
+function getLocation() {
+  if (!navigator.geolocation) {
+    alert("GPS समर्थन उपलब्ध नहीं है! अंतिम शहर लोड कर रहे हैं।");
+    fallbackToLastCity();
+    return;
+  }
+  
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      fetchAll(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      console.warn("GPS Access Error:", err.message);
+      alert("GPS चालू नहीं है या अनुमति नहीं मिली।");
+      fallbackToLastCity();
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+  );
+}
+
+function fallbackToLastCity() {
+  const lastCity = localStorage.getItem("lastCity") || "Delhi";
+  searchCity(lastCity);
+}
+
+function handleSearch() {
+  const c = document.getElementById("city").value.trim();
+  if (c) searchCity(c);
+}
+
+function searchCity(cityName) {
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${key}`)
+  .then(r => r.json())
+  .then(d => {
+    if (d.cod !== 200) return alert("शहर नहीं मिला!");
+    localStorage.setItem("lastCity", cityName);
+    fetchAll(d.coord.lat, d.coord.lon);
+  }).catch(() => alert("नेटवर्क त्रुटि हुई!"));
+}
+
+async function fetchAll(lat, lon) {
+  currentCoords = { lat, lon };
+  try {
+    const [weather, forecast, aqi] = await Promise.all([
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric&lang=hi`).then(r=>r.json()),
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${key}&units=metric&lang=hi`).then(r=>r.json()),
+      fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${key}`).then(r=>r.json())
+    ]);
+
+    renderHero(weather);
+    renderStats(weather);
+    renderAQI(aqi);
+    renderHourly(forecast);
+    renderForecast5Days(forecast);
+    renderChart(forecast);
+  } catch(e) { console.error("Data fetch error:", e); }
+}
+
+function convert(t) { return unit === "F" ? (t * 9/5 + 32).toFixed(1) : t.toFixed(1); }
+
+function renderHero(d) {
+  document.getElementById("hero-city").innerText = d.name;
+  document.getElementById("hero-icon").innerText = getIcon(d.weather[0].main);
+  document.getElementById("hero-temp").innerText = `${convert(d.main.temp)}°${unit}`;
+  document.getElementById("hero-desc").innerText = d.weather[0].description;
+}
+
+function renderStats(d) {
+  document.getElementById("stat-humidity").innerText = `${d.main.humidity}%`;
+  document.getElementById("stat-wind").innerText = `${d.wind.speed} m/s`;
+  document.getElementById("stat-sunrise").innerText = new Date(d.sys.sunrise * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  document.getElementById("stat-sunset").innerText = new Date(d.sys.sunset * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function renderAQI(data) {
+  const aqi = data.list[0].main.aqi;
+  const labels = ["Good 😊", "Fair 🙂", "Moderate 😐", "Poor 😷", "Very Poor ☠️"];
+  const el = document.getElementById("aqi-display");
+  el.innerHTML = `<span class="aqi-pill aqi-${aqi}">AQI Level ${aqi}: ${labels[aqi-1]}</span>`;
+}
+
+function renderHourly(f) {
+  const box = document.getElementById("hourly-scroll");
+  box.innerHTML = f.list.slice(0, 8).map(h => `
+    <div class="hour-item">
+      <div style="font-size: 0.8rem; color: var(--text-sub);">${h.dt_txt.split(" ")[1].slice(0, 5)}</div>
+      <div style="font-size: 1.5rem; margin: 4px 0;">${getIcon(h.weather[0].main)}</div>
+      <div style="font-weight: 700;">${convert(h.main.temp)}°</div>
+    </div>
+  `).join("");
+}
+
+// 5-Day Forecast Logic
+function renderForecast5Days(f) {
+  const box = document.getElementById("forecast-list");
+  const days = {};
+  
+  f.list.forEach(i => {
+    const date = i.dt_txt.split(" ")[0];
+    if (!days[date]) days[date] = [];
+    days[date].push(i);
+  });
+
+  box.innerHTML = "";
+  Object.keys(days).slice(1, 6).forEach(date => {
+    const list = days[date];
+    const min = Math.min(...list.map(a => a.main.temp_min));
+    const max = Math.max(...list.map(a => a.main.temp_max));
+    const mid = list[Math.floor(list.length / 2)];
+    const dayName = new Date(date).toLocaleDateString("hi-IN", { weekday: "short", day: "numeric", month: "short" });
+
+    box.innerHTML += `
+      <div class="forecast-row">
+        <div style="font-weight: 600; font-size: 0.9rem; width: 100px;">${dayName}</div>
+        <div style="font-size: 1.3rem;">${getIcon(mid.weather[0].main)}</div>
+        <div style="font-size: 0.9rem; font-weight: 700;">${convert(min)}° / ${convert(max)}°${unit}</div>
+      </div>
+    `;
+  });
+}
+
+function renderChart(f) {
+  const labels = [], temps = [];
+  f.list.slice(0, 7).forEach(i => {
+    labels.push(i.dt_txt.split(" ")[1].slice(0, 5));
+    temps.push(convert(i.main.temp));
+  });
+
+  const ctx = document.getElementById("tempChart").getContext("2d");
+  if (tempChart) tempChart.destroy();
+  
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-main');
+
+  tempChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Temp",
+        data: temps,
+        borderColor: "#00e5ff",
+        backgroundColor: "rgba(0, 229, 255, 0.1)",
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { display: false } },
+        y: { ticks: { color: textColor }, grid: { color: "rgba(255,255,255,0.1)" } }
+      }
+    }
+  });
+}
+
+// Fixed Voice Search Function
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  
+  if (!SpeechRecognition) {
+    alert("आपके ब्राउज़र में वॉइस सर्च काम नहीं कर रहा है। कृपया Google Chrome का उपयोग करें।");
+    return;
+  }
+
+  const micBtn = document.getElementById("mic-btn");
+  const recognition = new SpeechRecognition();
+  
+  recognition.lang = "hi-IN";
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    micBtn.classList.add("listening");
+  };
+
+  recognition.onresult = (event) => {
+    micBtn.classList.remove("listening");
+    const spokenText = event.results[0][0].transcript.replace(/[.।]/g, '').trim();
+    if (spokenText) {
+      document.getElementById("city").value = spokenText;
+      searchCity(spokenText);
+    }
+  };
+
+  recognition.onerror = (event) => {
+    micBtn.classList.remove("listening");
+    alert("आवाज़ पहचानने में समस्या हुई, कृपया पुन: प्रयास करें।");
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove("listening");
+  };
+
+  recognition.start();
+}
+
+function getIcon(t) {
+  t = t.toLowerCase();
+  if (t.includes("clear")) return "☀️";
+  if (t.includes("cloud")) return "☁️";
+  if (t.includes("rain")) return "🌧️";
+  if (t.includes("thunder")) return "⛈️";
+  if (t.includes("snow")) return "❄️";
+  return "🌫️";
+}
+</script>
+
+</body>
+</html>
